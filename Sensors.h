@@ -15,6 +15,9 @@ struct Line {
 
   bool left;
   bool right;
+
+  int leftRaw;
+  int rightRaw;
 };
 
 
