@@ -13,11 +13,14 @@
 
 
 // =========================
-// IR
+// LINE SENSOR
 // =========================
 
-#define PIN_IR_L 7
-#define PIN_IR_R 8
+#define PIN_LINE_L A2
+#define PIN_LINE_R A7
+
+#define LINE_L_TH 500
+#define LINE_R_TH 500
 
 
 
