@@ -1,126 +1,10 @@
 #include "Strategy.h"
-#include "Motors.h"
-#include "Config.h"
-
-
-
-namespace {
-
-  int lastTarget = 0;
-
-
-
-  unsigned long targetTimer = 0;
-
-
-
-  bool searchDir = 0;
-
-  unsigned long searchTimer = 0;
-
-
-
-  int escapeState = 0;
-
-  bool escapeLeft = false;
-
-  unsigned long escapeTimer = 0;
-}
-
-
-
-void AI::reset() {
-
-  lastTarget = 0;
-
-  targetTimer = 0;
-
-  searchDir = 0;
-
-  searchTimer = 0;
-
-  escapeState = 0;
-
-  escapeLeft = false;
-
-  escapeTimer = 0;
-}
-
-
-
-void AI::run(Dist dist,
-             Line line) {
-
-  // =========================
-  // ESCAPE
   // =========================
 
-  if (escapeState == 1) {
+  if (dist.fc < RAM_DIST) {
 
-    Motors::move(-ESCAPE_BACK,
-                 -ESCAPE_BACK);
-
-    if (millis() - escapeTimer >= ESCAPE_BACK_MS) {
-
-      escapeTimer = millis();
-
-      escapeState = 2;
-    }
-
-    return;
-  }
-
-
-
-  if (escapeState == 2) {
-
-    if (escapeLeft) {
-
-      Motors::move(ESCAPE_TURN,
-                   -ESCAPE_BACK);
-    }
-
-    else {
-
-      Motors::move(-ESCAPE_BACK,
-                    ESCAPE_TURN);
-    }
-
-    if (millis() - escapeTimer >= ESCAPE_TURN_MS) {
-
-      escapeState = 0;
-    }
-
-    return;
-  }
-
-
-
-  // =========================
-  // START ESCAPE
-  // =========================
-
-  if (line.left || line.right) {
-
-    escapeState = 1;
-
-    escapeTimer = millis();
-
-    escapeLeft = line.left;
-
-    return;
-  }
-
-
-
-  // =========================
-  // RAM
-  // =========================
-
-  if (dist.front < RAM_DIST) {
-
-    Motors::move(RAM_SPEED,
-                 RAM_SPEED);
+    Motors::move(ATTACK_SPEED,
+                 ATTACK_SPEED);
 
     lastTarget = 0;
 
@@ -130,12 +14,12 @@ void AI::run(Dist dist,
   }
 
 
-
   // =========================
-  // TRACK LEFT
+  // 5. เจอด้านซ้าย
   // =========================
 
-  if (dist.left < TRACK_DIST) {
+  if (dist.fl < TRACK_DIST ||
+      dist.sl < SIDE_DIST) {
 
     Motors::move(TRACK_SLOW,
                  TRACK_FAST);
@@ -148,12 +32,12 @@ void AI::run(Dist dist,
   }
 
 
-
   // =========================
-  // TRACK RIGHT
+  // 6. เจอด้านขวา
   // =========================
 
-  if (dist.right < TRACK_DIST) {
+  if (dist.fr < TRACK_DIST ||
+      dist.sr < SIDE_DIST) {
 
     Motors::move(TRACK_FAST,
                  TRACK_SLOW);
@@ -166,37 +50,38 @@ void AI::run(Dist dist,
   }
 
 
-
   // =========================
-  // TARGET LOCK
+  // 7. ล็อกเป้าชั่วคราว
   // =========================
 
   if (millis() - targetTimer <= LOCK_TIME) {
 
+    // เป้าล่าสุดอยู่ซ้าย
     if (lastTarget == -1) {
 
       Motors::move(-SEARCH_SPEED,
-                    SEARCH_SPEED);
+                    SEARCH_FAST);
 
       return;
     }
 
+
+    // เป้าล่าสุดอยู่ขวา
     if (lastTarget == 1) {
 
-      Motors::move(SEARCH_SPEED,
-                   -SEARCH_SPEED);
+      Motors::move(SEARCH_FAST,
+                  -SEARCH_SPEED);
 
       return;
     }
   }
 
 
-
   // =========================
-  // SEARCH
+  // 8. หมุนหาศัตรู
   // =========================
 
-  if (millis() - searchTimer >= SEARCH_TIME) {
+  if (millis() - searchTimer >= SEARCH_SWAP_MS) {
 
     searchDir = !searchDir;
 
@@ -204,13 +89,14 @@ void AI::run(Dist dist,
   }
 
 
-
-  if (searchDir == 0) {
+  // หมุนซ้าย
+  if (!searchDir) {
 
     Motors::move(-SEARCH_SPEED,
                   SEARCH_SPEED);
   }
 
+  // หมุนขวา
   else {
 
     Motors::move(SEARCH_SPEED,
