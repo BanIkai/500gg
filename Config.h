@@ -1,7 +1,36 @@
 #pragma once
+
+// =========================
+// MOTOR PINS
+// =========================
+
+#define PIN_L1 11
+#define PIN_L2 10
+
+#define PIN_R1 5
+#define PIN_R2 6
+
+
+// =========================
+// LINE SENSOR
+// =========================
+
+#define PIN_LINE_L A2
+#define PIN_LINE_R A7
+
+#define LINE_L_TH 500
+#define LINE_R_TH 500
+
+
+// =========================
+// XSHUT PINS
+// =========================
+
+#define PIN_XSHUT_SL 13
+#define PIN_XSHUT_FL 12
+#define PIN_XSHUT_FC 4
 #define PIN_XSHUT_FR 2
 #define PIN_XSHUT_SR 3
-
 
 // =========================
 // TOF ADDRESS
