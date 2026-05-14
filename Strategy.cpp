@@ -1,105 +1,103 @@
 #include "Strategy.h"
+#include "Motors.h"
+#include "Config.h"
+
+namespace {
+
+  // จำทิศล่าสุด
+  int lastTarget = 0;
+
+  // เวลาที่เจอศัตรูล่าสุด
+  unsigned long targetTimer = 0;
+
+
+  // ทิศการค้นหา
+  bool searchDir = 0;
+
+  // เวลาสลับทิศ
+  unsigned long searchTimer = 0;
+
+
+  // สถานะหนีเส้น
+  int escapeState = 0;
+
+  bool escapeLeft = false;
+
+  unsigned long escapeTimer = 0;
+}
+
+
+void AI::reset() {
+
+  lastTarget = 0;
+
+  targetTimer = 0;
+
+  searchDir = 0;
+
+  searchTimer = 0;
+
+  escapeState = 0;
+}
+
+
+void AI::run(Dist dist,
+             Line line) {
+
+  // =========================
+  // 1. หนีเส้นก่อนเสมอ
   // =========================
 
-  if (dist.fc < RAM_DIST) {
+  if (line.left || line.right) {
 
-    Motors::move(ATTACK_SPEED,
-                 ATTACK_SPEED);
+    escapeState = 1;
 
-    lastTarget = 0;
+    escapeLeft = line.left;
 
-    targetTimer = millis();
-
-    return;
+    escapeTimer = millis();
   }
 
 
   // =========================
-  // 5. เจอด้านซ้าย
+  // 2. ถอยหลัง
   // =========================
 
-  if (dist.fl < TRACK_DIST ||
-      dist.sl < SIDE_DIST) {
+  if (escapeState == 1) {
 
-    Motors::move(TRACK_SLOW,
-                 TRACK_FAST);
+    Motors::move(-ESCAPE_BACK,
+                 -ESCAPE_BACK);
 
-    lastTarget = -1;
+    if (millis() - escapeTimer >= ESCAPE_BACK_MS) {
 
-    targetTimer = millis();
+      escapeState = 2;
 
-    return;
-  }
-
-
-  // =========================
-  // 6. เจอด้านขวา
-  // =========================
-
-  if (dist.fr < TRACK_DIST ||
-      dist.sr < SIDE_DIST) {
-
-    Motors::move(TRACK_FAST,
-                 TRACK_SLOW);
-
-    lastTarget = 1;
-
-    targetTimer = millis();
-
-    return;
-  }
-
-
-  // =========================
-  // 7. ล็อกเป้าชั่วคราว
-  // =========================
-
-  if (millis() - targetTimer <= LOCK_TIME) {
-
-    // เป้าล่าสุดอยู่ซ้าย
-    if (lastTarget == -1) {
-
-      Motors::move(-SEARCH_SPEED,
-                    SEARCH_FAST);
-
-      return;
+      escapeTimer = millis();
     }
 
+    return;
+  }
 
-    // เป้าล่าสุดอยู่ขวา
-    if (lastTarget == 1) {
 
-      Motors::move(SEARCH_FAST,
-                  -SEARCH_SPEED);
+  // =========================
+  // 3. หมุนกลับเข้ากลางสนาม
+  // =========================
 
-      return;
+  if (escapeState == 2) {
+
+    // ถ้าเจอเส้นซ้าย
+    // ให้หมุนขวา
+
+    if (escapeLeft) {
+
+      Motors::move(ESCAPE_TURN,
+                  -ESCAPE_TURN);
     }
-  }
 
+    // ถ้าเจอเส้นขวา
+    // ให้หมุนซ้าย
 
-  // =========================
-  // 8. หมุนหาศัตรู
-  // =========================
+    else {
 
-  if (millis() - searchTimer >= SEARCH_SWAP_MS) {
-
-    searchDir = !searchDir;
-
-    searchTimer = millis();
-  }
-
-
-  // หมุนซ้าย
-  if (!searchDir) {
-
-    Motors::move(-SEARCH_SPEED,
-                  SEARCH_SPEED);
-  }
-
-  // หมุนขวา
-  else {
-
-    Motors::move(SEARCH_SPEED,
-                 -SEARCH_SPEED);
-  }
+      Motors::move(-ESCAPE_TURN,
+                    ESCAPE_TURN);
 }
